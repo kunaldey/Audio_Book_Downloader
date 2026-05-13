@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    ports:
+      - "30333:30333"
+    volumes:
+      - C:/Users/kunal/Downloads/Youtube:/downloads
+    environment:
+      - DEFAULT_DOWNLOAD_PATH=/downloads
+    restart: unless-stopped

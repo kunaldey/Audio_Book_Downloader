@@ -1,0 +1,18 @@
+{
+  "name": "audio_book_downloader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "ui": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "openai": "^4.77.0",
+    "sharp": "^0.33.5"
+  }
+}
