@@ -348,6 +348,11 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
         name = name.replace(/^vidssave\.com\s*/i, '');
         name = name.replace(/\s*\b\d+\s*kbps\b/gi, '').trim();
 
+        // Format: Title - Author ｜ Narrator ｜ ... ｜ #ShowName EP XX
+        if (name.includes(' ｜ ')) {
+          return name.split(' ｜ ')[0].trim() + ext;
+        }
+
         // Format: #ShowName Ep XX _ Title _ Author _ Narrator
         if (name.includes(' _ ')) {
           const parts = name.split(' _ ').map(p => p.replace(/\s+/g, ' ').trim());
