@@ -4,7 +4,7 @@ services:
     ports:
       - "30333:30333"
     volumes:
-      - C:/Users/kunal/Downloads/Youtube:/downloads
+      - ${DOWNLOAD_FOLDER}:/downloads
     environment:
       - DEFAULT_DOWNLOAD_PATH=/downloads
     restart: unless-stopped
