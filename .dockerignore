@@ -1,0 +1,5 @@
+node_modules
+.claude
+.gitignore
+playwright-report
+test-results

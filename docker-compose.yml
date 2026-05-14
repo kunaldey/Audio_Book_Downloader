@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    ports:
+      - "30333:30333"
+    volumes:
+      - ${DOWNLOAD_FOLDER}:/downloads
+      - ${NAS_FOLDER}:/nas
+    environment:
+      - DEFAULT_DOWNLOAD_PATH=/downloads
+    restart: unless-stopped
