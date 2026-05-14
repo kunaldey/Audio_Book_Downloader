@@ -445,20 +445,48 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
           catch { res.end(JSON.stringify({ error: 'Cannot create destination folder: ' + destPath })); return; }
         }
 
-        let copied = 0;
+        let moved = 0;
         const errors = [];
         for (const filename of files) {
           const src  = path.join(sourcePath, filename);
           const dest = path.join(destPath, filename);
           try {
             fs.copyFileSync(src, dest);
-            copied++;
+            fs.unlinkSync(src); // delete source after successful copy
+            moved++;
           } catch (err) {
             errors.push({ file: filename, error: err.message });
           }
         }
 
-        res.end(JSON.stringify({ copied, total: files.length, errors }));
+        res.end(JSON.stringify({ moved, total: files.length, errors }));
+      } catch (err) {
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/rename-file') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      let folderPath, oldName, newName;
+      try { ({ folderPath, oldName, newName } = JSON.parse(body)); }
+      catch { res.writeHead(400); res.end('Invalid JSON'); return; }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      try {
+        const oldPath = path.join(folderPath, oldName);
+        const newPath = path.join(folderPath, newName);
+        if (!fs.existsSync(oldPath)) {
+          res.end(JSON.stringify({ error: 'File not found' })); return;
+        }
+        if (fs.existsSync(newPath)) {
+          res.end(JSON.stringify({ error: 'A file with that name already exists' })); return;
+        }
+        fs.renameSync(oldPath, newPath);
+        res.end(JSON.stringify({ ok: true }));
       } catch (err) {
         res.end(JSON.stringify({ error: err.message }));
       }

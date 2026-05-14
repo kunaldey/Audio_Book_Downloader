@@ -387,6 +387,24 @@
     .btn-send:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
     .btn-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
+    .btn-rename-file {
+      background: none; border: none; padding: 2px 4px;
+      color: transparent; cursor: pointer; border-radius: 4px;
+      display: flex; align-items: center; flex-shrink: 0;
+      transition: color 0.15s, background 0.15s;
+    }
+    .file-item:hover .btn-rename-file { color: var(--text-muted); }
+    .btn-rename-file:hover { color: var(--text) !important; background: rgba(255,255,255,0.08); }
+    .btn-rename-file svg { width: 11px; height: 11px; }
+
+    .rename-input {
+      flex: 1; background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border-focus); border-radius: 5px;
+      padding: 2px 6px; color: var(--text);
+      font-size: 0.75rem; font-family: inherit; outline: none;
+      min-width: 0;
+    }
+
     .file-item-info { flex: 1; min-width: 0; }
     .file-item-name {
       font-size: 0.75rem; color: var(--text);
@@ -694,7 +712,7 @@
           </select>
           <div class="send-actions">
             <button class="btn-pick-dest" id="pickDestBtn">Browse</button>
-            <button class="btn-send" id="sendBtn" disabled>Send</button>
+            <button class="btn-send" id="sendBtn" disabled>Move</button>
           </div>
         </div>
 
@@ -933,12 +951,18 @@
             <div class="file-item-name" title="${esc}">${f.name}</div>
             <div class="file-item-meta">${formatSize(f.size)} · ${timeAgo(f.modified)}</div>
           </div>
+          <button class="btn-rename-file" title="Rename" data-name="${esc}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
         </div>`;
       }).join('');
 
       videosList.querySelectorAll('.file-item').forEach(item => {
         item.addEventListener('click', e => {
-          if (e.target.classList.contains('file-item-cb')) return;
+          if (e.target.classList.contains('file-item-cb') || e.target.closest('.btn-rename-file')) return;
           const cb = item.querySelector('.file-item-cb');
           cb.checked = !cb.checked;
           toggleVideo(cb.dataset.name, cb.checked, item);
@@ -947,6 +971,54 @@
       videosList.querySelectorAll('.file-item-cb').forEach(cb => {
         cb.addEventListener('change', () => {
           toggleVideo(cb.dataset.name, cb.checked, cb.closest('.file-item'));
+        });
+      });
+
+      // ── Inline rename ──────────────────────────────────────────────────────
+      videosList.querySelectorAll('.btn-rename-file').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const item     = btn.closest('.file-item');
+          const nameEl   = item.querySelector('.file-item-name');
+          const oldName  = btn.dataset.name;
+          if (item.querySelector('.rename-input')) return; // already editing
+
+          const input = document.createElement('input');
+          input.className = 'rename-input';
+          input.value = oldName;
+          nameEl.replaceWith(input);
+          input.focus();
+          input.select();
+
+          async function commitRename() {
+            const newName = input.value.trim();
+            if (!newName || newName === oldName) { cancelRename(); return; }
+            const folderPath = document.getElementById('downloadPath').value.trim();
+            try {
+              const r    = await fetch('/rename-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ folderPath, oldName, newName }),
+              });
+              const data = await r.json();
+              if (data.error) { alert('Rename failed: ' + data.error); cancelRename(); }
+              else { scanFolder(); }
+            } catch { cancelRename(); }
+          }
+
+          function cancelRename() {
+            const restored = document.createElement('div');
+            restored.className = 'file-item-name';
+            restored.title = oldName;
+            restored.textContent = oldName;
+            input.replaceWith(restored);
+          }
+
+          input.addEventListener('keydown', e => {
+            if (e.key === 'Enter')  commitRename();
+            if (e.key === 'Escape') cancelRename();
+          });
+          input.addEventListener('blur', () => setTimeout(commitRename, 150));
         });
       });
     }
@@ -1097,23 +1169,23 @@
       const data = await r.json();
       if (data.error) {
         sendBtn.textContent = '✗ Error';
-        setTimeout(() => { sendBtn.textContent = 'Send'; sendBtn.disabled = false; }, 2500);
+        setTimeout(() => { sendBtn.textContent = 'Move'; sendBtn.disabled = false; }, 2500);
       } else {
         const failed = (data.results || []).filter(r => r.status === 'error');
         if (failed.length > 0) {
           sendBtn.textContent = `✗ ${failed.length} failed`;
-          setTimeout(() => { sendBtn.textContent = 'Send'; sendBtn.disabled = false; }, 2500);
+          setTimeout(() => { sendBtn.textContent = 'Move'; sendBtn.disabled = false; }, 2500);
         } else {
-          sendBtn.textContent = `✓ Sent ${data.ok}`;
+          sendBtn.textContent = `✓ Moved ${data.moved}`;
           setTimeout(() => {
-            sendBtn.textContent = 'Send';
+            sendBtn.textContent = 'Move';
             sendBtn.disabled = selectedVideos.size === 0 || !destFolderPath;
           }, 2500);
         }
       }
     } catch (e) {
       sendBtn.textContent = '✗ Error';
-      setTimeout(() => { sendBtn.textContent = 'Send'; sendBtn.disabled = false; }, 2500);
+      setTimeout(() => { sendBtn.textContent = 'Move'; sendBtn.disabled = false; }, 2500);
     }
   });
 
