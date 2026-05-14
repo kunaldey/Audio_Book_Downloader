@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Audio Book Downloader</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="apple-touch-icon" href="/favicon.svg" />
+  <link rel="icon" id="faviconLink" type="image/png" href="" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -930,6 +929,62 @@
 </div>
 
 <script>
+  // ── Favicon (canvas → PNG, works in every browser) ────────────────────────
+  (function () {
+    const S = 64, r = 14;
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const ctx = c.getContext('2d');
+
+    // Rounded-rect clip
+    function rrect(x, y, w, h, cr) {
+      ctx.beginPath();
+      ctx.moveTo(x + cr, y);
+      ctx.lineTo(x + w - cr, y);      ctx.arcTo(x + w, y,     x + w, y + cr,     cr);
+      ctx.lineTo(x + w, y + h - cr);  ctx.arcTo(x + w, y + h, x + w - cr, y + h, cr);
+      ctx.lineTo(x + cr, y + h);      ctx.arcTo(x,     y + h, x,     y + h - cr, cr);
+      ctx.lineTo(x, y + cr);          ctx.arcTo(x,     y,     x + cr, y,          cr);
+      ctx.closePath();
+    }
+
+    // Purple → red gradient background
+    const grd = ctx.createLinearGradient(0, 0, S, S);
+    grd.addColorStop(0, '#8b5cf6');
+    grd.addColorStop(1, '#ef4444');
+    rrect(0, 0, S, S, r);
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    // Subtle top highlight
+    ctx.save();
+    rrect(0, 0, S, S, r);
+    ctx.clip();
+    const hi = ctx.createLinearGradient(0, 0, 0, 28);
+    hi.addColorStop(0, 'rgba(255,255,255,0.18)');
+    hi.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hi;
+    ctx.fillRect(0, 0, S, 28);
+    ctx.restore();
+
+    // Headphone arc  (centre 32,31 radius 16 — top half)
+    ctx.beginPath();
+    ctx.arc(32, 31, 16, Math.PI, 0);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth   = 5;
+    ctx.lineCap     = 'round';
+    ctx.stroke();
+
+    // Left ear cup
+    ctx.fillStyle = '#fff';
+    rrect(11, 30, 10, 15, 5); ctx.fill();
+
+    // Right ear cup
+    rrect(43, 30, 10, 15, 5); ctx.fill();
+
+    // Inject into <link>
+    document.getElementById('faviconLink').href = c.toDataURL('image/png');
+  })();
+
   // ── DOM refs ──────────────────────────────────────────────────────────────
   const submitBtn      = document.getElementById('submitBtn');
   const btnSpinner     = document.getElementById('btnSpinner');
