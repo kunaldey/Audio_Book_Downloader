@@ -367,6 +367,19 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
         name = name.replace(/^vidssave\.com\s*/i, '');
         name = name.replace(/\s*\b\d+\s*kbps\b/gi, '').trim();
 
+        // Format: Title By Author ｜ Narrators ｜ Show info
+        // "By" appears before the first "｜" → extract title+author from the segment before ｜
+        if (name.includes(' By ') && name.includes(' ｜ ')) {
+          const pipeIdx = name.indexOf(' ｜ ');
+          const byIdx   = name.indexOf(' By ');
+          if (byIdx < pipeIdx) {
+            const beforePipe = name.substring(0, pipeIdx).trim();
+            const titlePart  = beforePipe.substring(0, byIdx).replace(/\s+/g, ' ').trim();
+            const author     = beforePipe.substring(byIdx + 4).replace(/\s+/g, ' ').trim();
+            return `${titlePart} - ${author}${ext}`;
+          }
+        }
+
         // Format: ShowName ｜ Title ｜ Author ｜ Description ...
         if (name.includes(' ｜ ')) {
           const parts  = name.split(' ｜ ').map(p => p.trim());
@@ -387,7 +400,7 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
           if (title)           return `${title}${ext}`;
         }
 
-        // Format: Title By Author_rest
+        // Format: Title By Author (no ｜)
         if (name.includes(' By ')) {
           const idx       = name.indexOf(' By ');
           const titlePart = name.substring(0, idx).replace(/\s+/g, ' ').trim();
