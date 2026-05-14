@@ -407,6 +407,45 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
     return;
   }
 
+  if (req.method === 'POST' && req.url === '/copy-files') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      let sourcePath, destPath, files;
+      try { ({ sourcePath, destPath, files } = JSON.parse(body)); }
+      catch { res.writeHead(400); res.end('Invalid JSON'); return; }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+
+      if (!sourcePath || !destPath || !Array.isArray(files) || files.length === 0) {
+        res.end(JSON.stringify({ error: 'Missing parameters', results: [] }));
+        return;
+      }
+
+      try {
+        if (!fs.existsSync(destPath)) {
+          fs.mkdirSync(destPath, { recursive: true });
+        }
+        const results = [];
+        for (const filename of files) {
+          const src = path.join(sourcePath, filename);
+          const dst = path.join(destPath, filename);
+          try {
+            fs.copyFileSync(src, dst);
+            results.push({ file: filename, status: 'ok' });
+          } catch (err) {
+            results.push({ file: filename, status: 'error', error: err.message });
+          }
+        }
+        const ok = results.filter(r => r.status === 'ok').length;
+        res.end(JSON.stringify({ results, ok, failed: results.length - ok }));
+      } catch (err) {
+        res.end(JSON.stringify({ error: err.message, results: [] }));
+      }
+    });
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/stop') {
     if (activeProc && !activeProc.killed) {
       activeProc.kill();

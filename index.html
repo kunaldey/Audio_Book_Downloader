@@ -89,7 +89,7 @@
     /* ── Two-pane body ── */
     .card-body {
       display: grid;
-      grid-template-columns: 1fr 320px;
+      grid-template-columns: 1fr 500px;
       min-height: 0;
       flex: 1;
     }
@@ -287,30 +287,105 @@
       flex-shrink: 0;
     }
 
-    .files-list {
-      flex: 1; overflow-y: auto;
-      padding: 6px 0;
+    /* ── Two-column file layout ── */
+    .files-cols {
+      display: flex;
+      flex: 1;
+      min-height: 0;
     }
-    .files-list::-webkit-scrollbar { width: 5px; }
-    .files-list::-webkit-scrollbar-track { background: transparent; }
-    .files-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+    .files-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+    .files-col + .files-col { border-left: 1px solid var(--border); }
+
+    .col-header {
+      padding: 6px 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(0,0,0,0.2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .col-title {
+      font-size: 0.68rem; font-weight: 700; color: var(--text);
+      flex: 1; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .col-badge {
+      font-size: 0.62rem; font-weight: 600;
+      background: rgba(255,255,255,0.06); color: var(--text-muted);
+      border: 1px solid var(--border); border-radius: 10px; padding: 1px 6px;
+    }
+    .select-all-cb { accent-color: var(--purple); cursor: pointer; width: 13px; height: 13px; flex-shrink: 0; }
+
+    .col-list {
+      flex: 1; overflow-y: auto;
+      padding: 4px 0;
+    }
+    .col-list::-webkit-scrollbar { width: 4px; }
+    .col-list::-webkit-scrollbar-track { background: transparent; }
+    .col-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
 
     .file-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 14px;
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 10px;
       cursor: default;
       transition: background 0.12s;
     }
     .file-item:hover { background: rgba(255,255,255,0.04); }
+    .file-item.selected { background: rgba(139,92,246,0.1); }
+    .file-item.selected:hover { background: rgba(139,92,246,0.15); }
+
+    .file-item-cb {
+      width: 14px; height: 14px; flex-shrink: 0;
+      accent-color: var(--purple); cursor: pointer;
+    }
 
     .file-item-icon {
-      width: 30px; height: 30px; border-radius: 7px;
+      width: 26px; height: 26px; border-radius: 6px;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; font-size: 14px;
+      flex-shrink: 0; font-size: 12px;
     }
-    .file-item-icon.audio { background: rgba(139,92,246,0.15); }
+    .file-item-icon.video { background: rgba(139,92,246,0.15); }
     .file-item-icon.image { background: rgba(59,130,246,0.15); }
     .file-item-icon.other { background: rgba(100,116,139,0.15); }
+
+    /* ── Send-to-folder toolbar ── */
+    .send-toolbar {
+      border-top: 1px solid var(--border);
+      padding: 8px 12px;
+      background: rgba(139,92,246,0.06);
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .send-count { font-size: 0.72rem; font-weight: 700; color: var(--purple); flex-shrink: 0; }
+    .send-dest {
+      font-size: 0.65rem; color: var(--text-muted);
+      font-family: 'SF Mono','Consolas',monospace;
+      flex: 1; min-width: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .send-actions { display: flex; gap: 5px; flex-shrink: 0; }
+    .btn-pick-dest {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+      color: var(--text-muted); font-size: 0.72rem; font-family: inherit;
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+    }
+    .btn-pick-dest:hover:not(:disabled) { background: rgba(255,255,255,0.12); color: var(--text); }
+    .btn-pick-dest:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-send {
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      border: none; border-radius: 6px; padding: 4px 14px;
+      color: #fff; font-size: 0.72rem; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-send:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
+    .btn-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
     .file-item-info { flex: 1; min-width: 0; }
     .file-item-name {
@@ -576,12 +651,47 @@
 
         <div class="files-path" id="filesPath">—</div>
 
-        <div class="files-list" id="filesList">
-          <div class="files-empty">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span>No files yet</span>
+        <div class="files-cols">
+          <!-- Videos column -->
+          <div class="files-col">
+            <div class="col-header">
+              <input type="checkbox" class="select-all-cb" id="selectAllVideos" title="Select / deselect all videos" />
+              <span class="col-title">Videos</span>
+              <span class="col-badge" id="videoCountBadge">0</span>
+            </div>
+            <div class="col-list" id="videosList">
+              <div class="files-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>No videos yet</span>
+              </div>
+            </div>
+          </div>
+          <!-- Images column -->
+          <div class="files-col">
+            <div class="col-header">
+              <span class="col-title">Images</span>
+              <span class="col-badge" id="imageCountBadge">0</span>
+            </div>
+            <div class="col-list" id="imagesList">
+              <div class="files-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>No images yet</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Send to Folder toolbar — appears when videos are selected -->
+        <div class="send-toolbar" id="sendToolbar" style="display:none">
+          <span class="send-count" id="sendCount">0 selected</span>
+          <span class="send-dest" id="sendDestSpan">No destination folder</span>
+          <div class="send-actions">
+            <button class="btn-pick-dest" id="pickDestBtn">Browse</button>
+            <button class="btn-send" id="sendBtn" disabled>Send</button>
           </div>
         </div>
 
@@ -676,10 +786,19 @@
   const statusText     = document.getElementById('statusText');
   const consoleBody    = document.getElementById('consoleBody');
   const clearBtn       = document.getElementById('clearBtn');
-  const scanBtn        = document.getElementById('scanBtn');
-  const filesList      = document.getElementById('filesList');
-  const fileCountBadge = document.getElementById('fileCountBadge');
-  const filesPath      = document.getElementById('filesPath');
+  const scanBtn         = document.getElementById('scanBtn');
+  const videosList      = document.getElementById('videosList');
+  const imagesList      = document.getElementById('imagesList');
+  const videoCountBadge = document.getElementById('videoCountBadge');
+  const imageCountBadge = document.getElementById('imageCountBadge');
+  const fileCountBadge  = document.getElementById('fileCountBadge');
+  const selectAllVideos = document.getElementById('selectAllVideos');
+  const sendToolbar     = document.getElementById('sendToolbar');
+  const sendCount       = document.getElementById('sendCount');
+  const sendDestSpan    = document.getElementById('sendDestSpan');
+  const pickDestBtn     = document.getElementById('pickDestBtn');
+  const sendBtn         = document.getElementById('sendBtn');
+  const filesPath       = document.getElementById('filesPath');
   const lastScanLabel  = document.getElementById('lastScanLabel');
   const countdownLabel = document.getElementById('countdownLabel');
   const countdownFill  = document.getElementById('countdownFill');
@@ -701,13 +820,13 @@
   }
 
   function fileCategory(ext) {
-    if (['.mp3','.mp4','.wav','.aac','.ogg','.flac','.m4a','.opus','.webm'].includes(ext)) return 'audio';
+    if (['.mp3','.mp4','.wav','.aac','.ogg','.flac','.m4a','.opus','.webm','.mkv','.avi'].includes(ext)) return 'video';
     if (['.jpg','.jpeg','.png','.webp','.gif','.bmp','.svg'].includes(ext)) return 'image';
     return 'other';
   }
 
   function fileEmoji(cat) {
-    if (cat === 'audio') return '🎵';
+    if (cat === 'video') return '🎵';
     if (cat === 'image') return '🖼️';
     return '📄';
   }
@@ -761,32 +880,103 @@
   let countdownTimer  = null;
   let autoScanTimer   = null;
 
+  const selectedVideos = new Set();
+  let destFolderPath   = '';
+
+  function updateSendToolbar() {
+    const n = selectedVideos.size;
+    sendToolbar.style.display = n > 0 ? 'flex' : 'none';
+    sendCount.textContent = n + (n === 1 ? ' selected' : ' selected');
+    sendBtn.disabled = n === 0 || !destFolderPath;
+  }
+
   function renderFiles(files, error) {
+    const EMPTY_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+
     if (error) {
-      filesList.innerHTML = `<div class="files-error">${error}</div>`;
+      videosList.innerHTML = `<div class="files-error">${error}</div>`;
+      imagesList.innerHTML = '';
       fileCountBadge.textContent = '—';
+      videoCountBadge.textContent = '0';
+      imageCountBadge.textContent = '0';
+      selectedVideos.clear();
+      updateSendToolbar();
       return;
     }
+
+    const videos = files.filter(f => fileCategory(f.ext) === 'video');
+    const images = files.filter(f => fileCategory(f.ext) === 'image');
+
     fileCountBadge.textContent = files.length + (files.length === 1 ? ' file' : ' files');
-    if (files.length === 0) {
-      filesList.innerHTML = `<div class="files-empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-        </svg>
-        <span>Folder is empty</span>
-      </div>`;
-      return;
+    videoCountBadge.textContent = videos.length;
+    imageCountBadge.textContent = images.length;
+
+    // Drop selections for files that no longer exist
+    const videoNames = new Set(videos.map(f => f.name));
+    for (const name of [...selectedVideos]) {
+      if (!videoNames.has(name)) selectedVideos.delete(name);
     }
-    filesList.innerHTML = files.map(f => {
-      const cat = fileCategory(f.ext);
-      return `<div class="file-item">
-        <div class="file-item-icon ${cat}">${fileEmoji(cat)}</div>
-        <div class="file-item-info">
-          <div class="file-item-name" title="${f.name}">${f.name}</div>
-          <div class="file-item-meta">${formatSize(f.size)} · ${timeAgo(f.modified)}</div>
-        </div>
-      </div>`;
-    }).join('');
+
+    if (videos.length === 0) {
+      videosList.innerHTML = `<div class="files-empty">${EMPTY_ICON}<span>No videos yet</span></div>`;
+    } else {
+      videosList.innerHTML = videos.map(f => {
+        const sel = selectedVideos.has(f.name);
+        const esc = f.name.replace(/"/g, '&quot;');
+        return `<div class="file-item${sel ? ' selected' : ''}" data-name="${esc}">
+          <input type="checkbox" class="file-item-cb" data-name="${esc}"${sel ? ' checked' : ''} />
+          <div class="file-item-icon video">${fileEmoji('video')}</div>
+          <div class="file-item-info">
+            <div class="file-item-name" title="${esc}">${f.name}</div>
+            <div class="file-item-meta">${formatSize(f.size)} · ${timeAgo(f.modified)}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+      videosList.querySelectorAll('.file-item').forEach(item => {
+        item.addEventListener('click', e => {
+          if (e.target.classList.contains('file-item-cb')) return;
+          const cb = item.querySelector('.file-item-cb');
+          cb.checked = !cb.checked;
+          toggleVideo(cb.dataset.name, cb.checked, item);
+        });
+      });
+      videosList.querySelectorAll('.file-item-cb').forEach(cb => {
+        cb.addEventListener('change', () => {
+          toggleVideo(cb.dataset.name, cb.checked, cb.closest('.file-item'));
+        });
+      });
+    }
+
+    if (images.length === 0) {
+      imagesList.innerHTML = `<div class="files-empty">${EMPTY_ICON}<span>No images yet</span></div>`;
+    } else {
+      imagesList.innerHTML = images.map(f => {
+        const esc = f.name.replace(/"/g, '&quot;');
+        return `<div class="file-item">
+          <div class="file-item-icon image">${fileEmoji('image')}</div>
+          <div class="file-item-info">
+            <div class="file-item-name" title="${esc}">${f.name}</div>
+            <div class="file-item-meta">${formatSize(f.size)} · ${timeAgo(f.modified)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    selectAllVideos.checked = videos.length > 0 && videos.every(f => selectedVideos.has(f.name));
+    selectAllVideos.indeterminate = selectedVideos.size > 0 && !selectAllVideos.checked;
+    updateSendToolbar();
+  }
+
+  function toggleVideo(name, checked, item) {
+    if (checked) selectedVideos.add(name); else selectedVideos.delete(name);
+    item.classList.toggle('selected', checked);
+    const allVideoCbs = videosList.querySelectorAll('.file-item-cb');
+    const allChecked  = [...allVideoCbs].every(cb => cb.checked);
+    const anyChecked  = [...allVideoCbs].some(cb => cb.checked);
+    selectAllVideos.checked       = allChecked;
+    selectAllVideos.indeterminate = anyChecked && !allChecked;
+    updateSendToolbar();
   }
 
   async function scanFolder(manual = false) {
@@ -855,6 +1045,74 @@
   });
 
   scanBtn.addEventListener('click', () => scanFolder(true));
+
+  selectAllVideos.addEventListener('change', () => {
+    const cbs = videosList.querySelectorAll('.file-item-cb');
+    cbs.forEach(cb => {
+      cb.checked = selectAllVideos.checked;
+      const item = cb.closest('.file-item');
+      item.classList.toggle('selected', selectAllVideos.checked);
+      if (selectAllVideos.checked) selectedVideos.add(cb.dataset.name);
+      else selectedVideos.delete(cb.dataset.name);
+    });
+    updateSendToolbar();
+  });
+
+  // ── Send to Folder ────────────────────────────────────────────────────────
+  pickDestBtn.addEventListener('click', async () => {
+    pickDestBtn.disabled = true;
+    pickDestBtn.style.opacity = '0.4';
+    try {
+      const r    = await fetch(`/browse-folder?initial=${encodeURIComponent(destFolderPath)}`);
+      const data = await r.json();
+      if (data.path) {
+        destFolderPath = data.path;
+        sendDestSpan.textContent = data.path;
+        sendBtn.disabled = selectedVideos.size === 0;
+      }
+    } catch {}
+    finally {
+      pickDestBtn.disabled = false;
+      pickDestBtn.style.opacity = '';
+    }
+  });
+
+  sendBtn.addEventListener('click', async () => {
+    if (selectedVideos.size === 0 || !destFolderPath) return;
+    const sourcePath = document.getElementById('downloadPath').value.trim();
+    const files = [...selectedVideos];
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+
+    try {
+      const r    = await fetch('/copy-files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourcePath, destPath: destFolderPath, files }),
+      });
+      const data = await r.json();
+      if (data.error) {
+        sendBtn.textContent = '✗ Error';
+        setTimeout(() => { sendBtn.textContent = 'Send'; sendBtn.disabled = false; }, 2500);
+      } else {
+        const failed = (data.results || []).filter(r => r.status === 'error');
+        if (failed.length > 0) {
+          sendBtn.textContent = `✗ ${failed.length} failed`;
+          setTimeout(() => { sendBtn.textContent = 'Send'; sendBtn.disabled = false; }, 2500);
+        } else {
+          sendBtn.textContent = `✓ Sent ${data.ok}`;
+          setTimeout(() => {
+            sendBtn.textContent = 'Send';
+            sendBtn.disabled = selectedVideos.size === 0 || !destFolderPath;
+          }, 2500);
+        }
+      }
+    } catch (e) {
+      sendBtn.textContent = '✗ Error';
+      setTimeout(() => { sendBtn.textContent = 'Send'; sendBtn.disabled = false; }, 2500);
+    }
+  });
 
   // Re-scan when path input changes (debounced)
   let pathDebounce = null;
