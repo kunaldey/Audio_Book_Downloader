@@ -407,7 +407,7 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
     return;
   }
 
-  if (req.method === 'POST' && req.url === '/send-to-nas') {
+  if (req.method === 'POST' && req.url === '/copy-files') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
