@@ -689,7 +689,9 @@
         <div class="send-toolbar" id="sendToolbar" style="display:none">
           <span class="send-count" id="sendCount">0 selected</span>
           <span class="send-dest" id="sendDestSpan">No destination folder</span>
-          <input id="nasDestInput" type="text" placeholder="/nas or \\NAS\Share" style="display:none; flex:1; font-size:0.72rem; padding:3px 8px; background:rgba(0,0,0,0.35); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:inherit; outline:none;" />
+          <select id="nasDestSelect" style="display:none; flex:1; font-size:0.72rem; padding:3px 8px; background:rgba(0,0,0,0.35); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:inherit; outline:none; cursor:pointer;">
+            <option value="">— select folder —</option>
+          </select>
           <div class="send-actions">
             <button class="btn-pick-dest" id="pickDestBtn">Browse</button>
             <button class="btn-send" id="sendBtn" disabled>Send</button>
@@ -1369,26 +1371,40 @@
   });
 
   // ── Init ──────────────────────────────────────────────────────────────────
-  const nasDestInput = document.getElementById('nasDestInput');
+  const nasDestSelect = document.getElementById('nasDestSelect');
+
+  async function loadNasFolders() {
+    try {
+      const data = await fetch('/list-folders?path=/nas').then(r => r.json());
+      nasDestSelect.innerHTML = '<option value="">— select folder —</option>';
+      (data.folders || []).forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = `/nas/${f}`;
+        opt.textContent = f;
+        nasDestSelect.appendChild(opt);
+      });
+    } catch {}
+  }
+
+  nasDestSelect.addEventListener('change', () => {
+    destFolderPath = nasDestSelect.value;
+    sendBtn.disabled = selectedVideos.size === 0 || !destFolderPath;
+  });
 
   (async () => {
     try {
       const cfg = await fetch('/config').then(r => r.json());
       const pathInput = document.getElementById('downloadPath');
       if (cfg.defaultDownloadPath) {
-        // Running in Docker — lock source path, swap browse buttons for text inputs
+        // Running in Docker — lock source path, swap browse buttons for folder dropdown
         pathInput.value = cfg.defaultDownloadPath;
         pathInput.readOnly = true;
         pathInput.style.opacity = '0.7';
-        document.getElementById('browseBtn').style.display  = 'none';
-        document.getElementById('pickDestBtn').style.display = 'none';
+        document.getElementById('browseBtn').style.display   = 'none';
+        document.getElementById('pickDestBtn').style.display  = 'none';
         document.getElementById('sendDestSpan').style.display = 'none';
-        nasDestInput.style.display = 'block';
-        // Use text input value as destination when sending
-        nasDestInput.addEventListener('input', () => {
-          destFolderPath = nasDestInput.value.trim();
-          sendBtn.disabled = selectedVideos.size === 0 || !destFolderPath;
-        });
+        nasDestSelect.style.display = 'flex';
+        await loadNasFolders();
       }
     } catch {}
     scanFolder();

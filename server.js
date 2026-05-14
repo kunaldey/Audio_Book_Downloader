@@ -329,6 +329,25 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
     return;
   }
 
+  if (req.method === 'GET' && req.url.startsWith('/list-folders')) {
+    const reqUrl  = new URL(req.url, `http://localhost:${PORT}`);
+    const dirPath = reqUrl.searchParams.get('path') || '/nas';
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+    try {
+      if (!fs.existsSync(dirPath)) {
+        res.end(JSON.stringify({ folders: [], error: 'Path not found: ' + dirPath })); return;
+      }
+      const folders = fs.readdirSync(dirPath, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => e.name)
+        .sort();
+      res.end(JSON.stringify({ folders }));
+    } catch (err) {
+      res.end(JSON.stringify({ folders: [], error: err.message }));
+    }
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/rename-files') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
