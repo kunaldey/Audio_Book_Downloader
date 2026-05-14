@@ -367,9 +367,14 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
         name = name.replace(/^vidssave\.com\s*/i, '');
         name = name.replace(/\s*\b\d+\s*kbps\b/gi, '').trim();
 
-        // Format: Title - Author ｜ Narrator ｜ ... ｜ #ShowName EP XX
+        // Format: ShowName ｜ Title ｜ Author ｜ Description ...
         if (name.includes(' ｜ ')) {
-          return name.split(' ｜ ')[0].trim() + ext;
+          const parts  = name.split(' ｜ ').map(p => p.trim());
+          const title  = parts[1] || '';
+          const author = parts[2] || '';
+          if (title && author) return `${title} - ${author}${ext}`;
+          if (title)           return `${title}${ext}`;
+          return parts[0] + ext;
         }
 
         // Format: #ShowName Ep XX _ Title _ Author _ Narrator
@@ -487,6 +492,35 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
         }
         fs.renameSync(oldPath, newPath);
         res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/delete-files') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      let folderPath, files;
+      try { ({ folderPath, files } = JSON.parse(body)); }
+      catch { res.writeHead(400); res.end('Invalid JSON'); return; }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      try {
+        let deleted = 0;
+        const errors = [];
+        for (const filename of files) {
+          const filePath = path.join(folderPath, filename);
+          try {
+            fs.unlinkSync(filePath);
+            deleted++;
+          } catch (err) {
+            errors.push({ file: filename, error: err.message });
+          }
+        }
+        res.end(JSON.stringify({ deleted, total: files.length, errors }));
       } catch (err) {
         res.end(JSON.stringify({ error: err.message }));
       }
