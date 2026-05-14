@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YouTube Downloader</title>
+  <title>Audio Book Downloader</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/favicon.svg" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -76,12 +78,12 @@
     .logo-wrap {
       width: 40px; height: 40px;
       border-radius: 10px;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
+      background: linear-gradient(135deg, #8b5cf6, #ef4444);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 4px 16px rgba(239,68,68,0.35);
+      box-shadow: 0 4px 16px rgba(139,92,246,0.4);
     }
-    .logo-wrap svg { width: 20px; height: 20px; fill: #fff; }
+    .logo-wrap svg { width: 22px; height: 22px; }
 
     .header-text h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; color: #f1f5f9; }
     .header-text p  { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
@@ -663,13 +665,19 @@
     <!-- Header -->
     <div class="header">
       <div class="logo-wrap">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.6 12 3.6 12 3.6s-7.54 0-9.38.45A3.02 3.02 0 0 0 .5 6.19C.06 8.04 0 12 0 12s.06 3.96.5 5.81A3.02 3.02 0 0 0 2.62 19.95C4.46 20.4 12 20.4 12 20.4s7.54 0 9.38-.45a3.02 3.02 0 0 0 2.12-2.14C23.94 15.96 24 12 24 12s-.06-4.04-.5-5.81zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+          <!-- headphone arc -->
+          <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+          <!-- left ear cup -->
+          <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" fill="white" stroke="none"/>
+          <!-- right ear cup -->
+          <path d="M16 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-3z" fill="white" stroke="none"/>
         </svg>
       </div>
       <div class="header-text">
-        <h1>YouTube Downloader</h1>
-        <p>Downloads video audio &amp; thumbnail via Playwright · Chromium · Headless</p>
+        <h1>Audio Book Downloader</h1>
+        <p>Download · Rename · Organise your audio book collection</p>
       </div>
     </div>
 

@@ -20,6 +20,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.method === 'GET' && req.url === '/favicon.svg') {
+    const faviconPath = path.join(__dirname, 'favicon.svg');
+    res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' });
+    fs.createReadStream(faviconPath).pipe(res);
+    return;
+  }
+
   if (req.method === 'GET' && req.url === '/config') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ defaultDownloadPath: process.env.DEFAULT_DOWNLOAD_PATH || '' }));
