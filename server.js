@@ -348,6 +348,35 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
     return;
   }
 
+  if (req.method === 'GET' && req.url.startsWith('/folder-stats')) {
+    const reqUrl  = new URL(req.url, `http://localhost:${PORT}`);
+    const basePath = reqUrl.searchParams.get('path') || '/nas';
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+    try {
+      if (!fs.existsSync(basePath)) {
+        res.end(JSON.stringify({ stats: [], error: 'Path not found: ' + basePath })); return;
+      }
+      const entries = fs.readdirSync(basePath, { withFileTypes: true });
+      const stats = entries
+        .filter(e => e.isDirectory())
+        .map(folder => {
+          const folderPath = path.join(basePath, folder.name);
+          try {
+            const files = fs.readdirSync(folderPath, { withFileTypes: true });
+            const count = files.filter(f => f.isFile()).length;
+            return { name: folder.name, count };
+          } catch {
+            return { name: folder.name, count: 0 };
+          }
+        })
+        .sort((a, b) => b.count - a.count);
+      res.end(JSON.stringify({ stats }));
+    } catch (err) {
+      res.end(JSON.stringify({ stats: [], error: err.message }));
+    }
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/rename-files') {
     let body = '';
     req.on('data', chunk => { body += chunk; });

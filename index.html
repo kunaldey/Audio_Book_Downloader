@@ -568,6 +568,85 @@
     }
     .mode-btn[data-mode="ai"].active { color: #06b6d4; }
 
+    /* ── Genre Stats ── */
+    .genre-section {
+      border-top: 1px solid var(--border);
+      padding: 18px 28px 20px;
+      background: rgba(0,0,0,0.12);
+      flex-shrink: 0;
+    }
+
+    .genre-section-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .genre-section-header svg { width: 15px; height: 15px; color: var(--purple); flex-shrink: 0; }
+    .genre-section-title { font-size: 0.8rem; font-weight: 700; color: var(--text); flex: 1; }
+    .genre-total-badge {
+      font-size: 0.72rem; font-weight: 700;
+      background: rgba(139,92,246,0.12); color: var(--purple);
+      border: 1px solid rgba(139,92,246,0.25); border-radius: 20px; padding: 3px 10px;
+    }
+    .genre-refresh-btn {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-muted); padding: 3px 8px; cursor: pointer; font-size: 0.68rem;
+      font-family: inherit; display: flex; align-items: center; gap: 4px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .genre-refresh-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+    .genre-refresh-btn svg { width: 11px; height: 11px; transition: transform 0.4s; }
+    .genre-refresh-btn.spinning svg { animation: spin 0.7s linear infinite; }
+
+    .genre-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .genre-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .genre-card:hover { background: rgba(255,255,255,0.055); border-color: rgba(255,255,255,0.12); }
+
+    .genre-card-top { display: flex; align-items: center; gap: 8px; }
+    .genre-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .genre-name { font-size: 0.72rem; font-weight: 700; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .genre-count { font-size: 1.3rem; font-weight: 800; line-height: 1; color: var(--text); }
+    .genre-label { font-size: 0.62rem; color: var(--text-muted); }
+    .genre-bar-track { height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+    .genre-bar-fill  { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+    .genre-pct { font-size: 0.62rem; color: var(--text-muted); text-align: right; }
+
+    .genre-bars { display: flex; flex-direction: column; gap: 10px; }
+    .genre-bar-row { display: flex; align-items: center; gap: 10px; }
+    .genre-bar-label {
+      font-size: 0.7rem; font-weight: 600; color: var(--text);
+      width: 90px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .genre-bar-outer {
+      flex: 1; height: 8px; background: rgba(255,255,255,0.06);
+      border-radius: 4px; overflow: hidden;
+    }
+    .genre-bar-inner { height: 100%; border-radius: 4px; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); min-width: 2px; }
+    .genre-bar-num {
+      font-size: 0.7rem; font-weight: 700; color: var(--text);
+      width: 30px; text-align: right; flex-shrink: 0;
+    }
+    .genre-bar-pct {
+      font-size: 0.62rem; color: var(--text-muted);
+      width: 34px; text-align: right; flex-shrink: 0;
+    }
+
+    .genre-empty {
+      font-size: 0.75rem; color: var(--text-muted); text-align: center;
+      padding: 12px 0; font-style: italic;
+    }
+
     /* Spinner in submit button */
     .spinner {
       width: 15px; height: 15px;
@@ -808,6 +887,31 @@
       </div>
 
     </div><!-- end card-body -->
+
+    <!-- Genre Collection Stats -->
+    <div class="genre-section" id="genreSection" style="display:none">
+      <div class="genre-section-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        <span class="genre-section-title">Collection Overview</span>
+        <span class="genre-total-badge" id="genreTotalBadge">0 stories</span>
+        <button class="genre-refresh-btn" id="genreRefreshBtn" title="Refresh stats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Stat cards row -->
+      <div class="genre-grid" id="genreGrid"></div>
+
+      <!-- Horizontal bar chart -->
+      <div class="genre-bars" id="genreBars"></div>
+    </div>
 
     <div class="card-footer">
       <span>Audio Book Downloader</span>
@@ -1289,7 +1393,7 @@
       }
       setStatus(finalType, finalType === 'success' ? 'Done' : 'Failed');
       // Auto-scan after download so new files appear immediately
-      if (finalType === 'success') scanFolder();
+      if (finalType === 'success') { scanFolder(); loadGenreStats(); }
     } catch (err) {
       appendLine('line-error', `\nConnection error: ${err.message}`);
       setStatus('error', 'Error');
@@ -1521,6 +1625,83 @@
     }
   });
 
+  // ── Genre Stats ───────────────────────────────────────────────────────────
+  const GENRE_COLORS = [
+    '#8b5cf6', '#ef4444', '#10b981', '#f59e0b',
+    '#3b82f6', '#ec4899', '#06b6d4', '#84cc16',
+    '#f97316', '#a855f7', '#14b8a6', '#eab308',
+  ];
+
+  const genreSection     = document.getElementById('genreSection');
+  const genreTotalBadge  = document.getElementById('genreTotalBadge');
+  const genreGrid        = document.getElementById('genreGrid');
+  const genreBars        = document.getElementById('genreBars');
+  const genreRefreshBtn  = document.getElementById('genreRefreshBtn');
+
+  async function loadGenreStats() {
+    genreRefreshBtn.classList.add('spinning');
+    try {
+      const r    = await fetch('/folder-stats?path=/nas');
+      const data = await r.json();
+      if (data.error || !data.stats || data.stats.length === 0) return;
+
+      genreSection.style.display = '';
+      const stats = data.stats; // already sorted desc by count
+      const total = stats.reduce((s, g) => s + g.count, 0);
+      const max   = stats[0]?.count || 1;
+
+      genreTotalBadge.textContent = total + (total === 1 ? ' story' : ' stories');
+
+      // ── Stat cards ──
+      genreGrid.innerHTML = stats.map((g, i) => {
+        const color = GENRE_COLORS[i % GENRE_COLORS.length];
+        const pct   = total > 0 ? Math.round((g.count / total) * 100) : 0;
+        const barW  = max > 0 ? Math.round((g.count / max) * 100) : 0;
+        return `<div class="genre-card">
+          <div class="genre-card-top">
+            <div class="genre-dot" style="background:${color}"></div>
+            <span class="genre-name" title="${g.name}">${g.name}</span>
+          </div>
+          <div class="genre-count" style="color:${color}">${g.count}</div>
+          <div class="genre-label">stories</div>
+          <div class="genre-bar-track">
+            <div class="genre-bar-fill" style="width:0%;background:${color}" data-w="${barW}"></div>
+          </div>
+          <div class="genre-pct">${pct}% of collection</div>
+        </div>`;
+      }).join('');
+
+      // ── Horizontal bar chart ──
+      genreBars.innerHTML = stats.map((g, i) => {
+        const color = GENRE_COLORS[i % GENRE_COLORS.length];
+        const pct   = total > 0 ? ((g.count / total) * 100).toFixed(1) : '0';
+        const barW  = max > 0 ? Math.round((g.count / max) * 100) : 0;
+        return `<div class="genre-bar-row">
+          <span class="genre-bar-label" title="${g.name}">${g.name}</span>
+          <div class="genre-bar-outer">
+            <div class="genre-bar-inner" style="width:0%;background:linear-gradient(90deg,${color}cc,${color})" data-w="${barW}"></div>
+          </div>
+          <span class="genre-bar-num">${g.count}</span>
+          <span class="genre-bar-pct">${pct}%</span>
+        </div>`;
+      }).join('');
+
+      // Animate bars in on next frame
+      requestAnimationFrame(() => {
+        genreGrid.querySelectorAll('.genre-bar-fill').forEach(el => {
+          el.style.width = el.dataset.w + '%';
+        });
+        genreBars.querySelectorAll('.genre-bar-inner').forEach(el => {
+          el.style.width = el.dataset.w + '%';
+        });
+      });
+
+    } catch {}
+    finally { genreRefreshBtn.classList.remove('spinning'); }
+  }
+
+  genreRefreshBtn.addEventListener('click', loadGenreStats);
+
   // ── Init ──────────────────────────────────────────────────────────────────
   const nasDestSelect = document.getElementById('nasDestSelect');
 
@@ -1559,6 +1740,7 @@
       }
     } catch {}
     scanFolder();
+    loadGenreStats();
   })();
 </script>
 </body>
