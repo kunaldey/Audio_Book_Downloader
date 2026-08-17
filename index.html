@@ -785,6 +785,7 @@
               <input type="checkbox" class="select-all-cb" id="selectAllVideos" title="Select / deselect all videos" />
               <span class="col-title">Videos</span>
               <span class="col-badge" id="videoCountBadge">0</span>
+              <button class="btn-delete-all" id="deleteSelectedVideosBtn" style="display:none" title="Delete selected videos">Delete</button>
             </div>
             <div class="col-list" id="videosList">
               <div class="files-empty">
@@ -1005,6 +1006,7 @@
   const imageCountBadge = document.getElementById('imageCountBadge');
   const fileCountBadge  = document.getElementById('fileCountBadge');
   const selectAllVideos = document.getElementById('selectAllVideos');
+  const deleteVideosBtn = document.getElementById('deleteSelectedVideosBtn');
   const sendToolbar     = document.getElementById('sendToolbar');
   const sendCount       = document.getElementById('sendCount');
   const sendDestSpan    = document.getElementById('sendDestSpan');
@@ -1112,6 +1114,10 @@
     sendToolbar.style.display = n > 0 ? 'flex' : 'none';
     sendCount.textContent = n + (n === 1 ? ' selected' : ' selected');
     sendBtn.disabled = n === 0 || !destFolderPath;
+    if (!deleteVideosBtn.disabled) {
+      deleteVideosBtn.style.display = n > 0 ? '' : 'none';
+      deleteVideosBtn.textContent   = `Delete (${n})`;
+    }
   }
 
   function renderFiles(files, error) {
@@ -1672,6 +1678,40 @@
       renameSummary.style.color = 'var(--red)';
     } finally {
       renameBtn.disabled = false;
+    }
+  });
+
+  // ── Delete Selected Videos ────────────────────────────────────────────────
+  deleteVideosBtn.addEventListener('click', async () => {
+    const folderPath = document.getElementById('downloadPath').value.trim();
+    const files      = [...selectedVideos];
+    if (files.length === 0) return;
+    if (!confirm(`Delete ${files.length} selected video${files.length === 1 ? '' : 's'}?\n\nThis permanently removes the file${files.length === 1 ? '' : 's'} from disk.`)) return;
+
+    deleteVideosBtn.textContent = 'Deleting…';
+    deleteVideosBtn.disabled    = true;
+
+    try {
+      const r    = await fetch('/delete-files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderPath, files }),
+      });
+      const data = await r.json();
+      if (data.error) alert('Delete failed: ' + data.error);
+      else {
+        if (data.errors && data.errors.length) {
+          alert(`Deleted ${data.deleted} of ${data.total}. Failed:\n` +
+                data.errors.map(e => `${e.file}: ${e.error}`).join('\n'));
+        }
+        files.forEach(name => selectedVideos.delete(name));
+        scanFolder();
+      }
+    } catch (e) {
+      alert('Error: ' + e.message);
+    } finally {
+      deleteVideosBtn.disabled = false;
+      updateSendToolbar();
     }
   });
 
