@@ -5,7 +5,15 @@ services:
       - "30333:30333"
     volumes:
       - ${DOWNLOAD_FOLDER}:/downloads
-      - ${NAS_FOLDER}:/nas
+      - nas_books:/nas
     environment:
       - DEFAULT_DOWNLOAD_PATH=/downloads
     restart: unless-stopped
+
+volumes:
+  nas_books:
+    driver: local
+    driver_opts:
+      type: cifs
+      o: "username=${NAS_USER},password=${NAS_PASS},vers=3.0,uid=1000,gid=1000"
+      device: "//192.168.0.84/SSD_Pool_2/Books/Audio Books"

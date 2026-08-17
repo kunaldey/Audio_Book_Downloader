@@ -20,6 +20,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.method === 'GET' && req.url === '/favicon.svg') {
+    const faviconPath = path.join(__dirname, 'favicon.svg');
+    res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' });
+    fs.createReadStream(faviconPath).pipe(res);
+    return;
+  }
+
   if (req.method === 'GET' && req.url === '/config') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ defaultDownloadPath: process.env.DEFAULT_DOWNLOAD_PATH || '' }));
@@ -329,6 +336,54 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
     return;
   }
 
+  if (req.method === 'GET' && req.url.startsWith('/list-folders')) {
+    const reqUrl  = new URL(req.url, `http://localhost:${PORT}`);
+    const dirPath = reqUrl.searchParams.get('path') || '/nas';
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+    try {
+      if (!fs.existsSync(dirPath)) {
+        res.end(JSON.stringify({ folders: [], error: 'Path not found: ' + dirPath })); return;
+      }
+      const folders = fs.readdirSync(dirPath, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => e.name)
+        .sort();
+      res.end(JSON.stringify({ folders }));
+    } catch (err) {
+      res.end(JSON.stringify({ folders: [], error: err.message }));
+    }
+    return;
+  }
+
+  if (req.method === 'GET' && req.url.startsWith('/folder-stats')) {
+    const reqUrl  = new URL(req.url, `http://localhost:${PORT}`);
+    const basePath = reqUrl.searchParams.get('path') || '/nas';
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+    try {
+      if (!fs.existsSync(basePath)) {
+        res.end(JSON.stringify({ stats: [], error: 'Path not found: ' + basePath })); return;
+      }
+      const entries = fs.readdirSync(basePath, { withFileTypes: true });
+      const stats = entries
+        .filter(e => e.isDirectory())
+        .map(folder => {
+          const folderPath = path.join(basePath, folder.name);
+          try {
+            const files = fs.readdirSync(folderPath, { withFileTypes: true });
+            const count = files.filter(f => f.isFile()).length;
+            return { name: folder.name, count };
+          } catch {
+            return { name: folder.name, count: 0 };
+          }
+        })
+        .sort((a, b) => b.count - a.count);
+      res.end(JSON.stringify({ stats }));
+    } catch (err) {
+      res.end(JSON.stringify({ stats: [], error: err.message }));
+    }
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/rename-files') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
@@ -348,9 +403,27 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
         name = name.replace(/^vidssave\.com\s*/i, '');
         name = name.replace(/\s*\b\d+\s*kbps\b/gi, '').trim();
 
-        // Format: Title - Author ｜ Narrator ｜ ... ｜ #ShowName EP XX
+        // Format: Title By Author ｜ Narrators ｜ Show info
+        // "By" appears before the first "｜" → extract title+author from the segment before ｜
+        if (name.includes(' By ') && name.includes(' ｜ ')) {
+          const pipeIdx = name.indexOf(' ｜ ');
+          const byIdx   = name.indexOf(' By ');
+          if (byIdx < pipeIdx) {
+            const beforePipe = name.substring(0, pipeIdx).trim();
+            const titlePart  = beforePipe.substring(0, byIdx).replace(/\s+/g, ' ').trim();
+            const author     = beforePipe.substring(byIdx + 4).replace(/\s+/g, ' ').trim();
+            return `${titlePart} - ${author}${ext}`;
+          }
+        }
+
+        // Format: ShowName ｜ Title ｜ Author ｜ Description ...
         if (name.includes(' ｜ ')) {
-          return name.split(' ｜ ')[0].trim() + ext;
+          const parts  = name.split(' ｜ ').map(p => p.trim());
+          const title  = parts[1] || '';
+          const author = parts[2] || '';
+          if (title && author) return `${title} - ${author}${ext}`;
+          if (title)           return `${title}${ext}`;
+          return parts[0] + ext;
         }
 
         // Format: #ShowName Ep XX _ Title _ Author _ Narrator
@@ -363,7 +436,7 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
           if (title)           return `${title}${ext}`;
         }
 
-        // Format: Title By Author_rest
+        // Format: Title By Author (no ｜)
         if (name.includes(' By ')) {
           const idx       = name.indexOf(' By ');
           const titlePart = name.substring(0, idx).replace(/\s+/g, ' ').trim();
@@ -426,20 +499,77 @@ if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }
           catch { res.end(JSON.stringify({ error: 'Cannot create destination folder: ' + destPath })); return; }
         }
 
-        let copied = 0;
+        let moved = 0;
         const errors = [];
         for (const filename of files) {
           const src  = path.join(sourcePath, filename);
           const dest = path.join(destPath, filename);
           try {
             fs.copyFileSync(src, dest);
-            copied++;
+            fs.unlinkSync(src); // delete source after successful copy
+            moved++;
           } catch (err) {
             errors.push({ file: filename, error: err.message });
           }
         }
 
-        res.end(JSON.stringify({ copied, total: files.length, errors }));
+        res.end(JSON.stringify({ moved, total: files.length, errors }));
+      } catch (err) {
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/rename-file') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      let folderPath, oldName, newName;
+      try { ({ folderPath, oldName, newName } = JSON.parse(body)); }
+      catch { res.writeHead(400); res.end('Invalid JSON'); return; }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      try {
+        const oldPath = path.join(folderPath, oldName);
+        const newPath = path.join(folderPath, newName);
+        if (!fs.existsSync(oldPath)) {
+          res.end(JSON.stringify({ error: 'File not found' })); return;
+        }
+        if (fs.existsSync(newPath)) {
+          res.end(JSON.stringify({ error: 'A file with that name already exists' })); return;
+        }
+        fs.renameSync(oldPath, newPath);
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/delete-files') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      let folderPath, files;
+      try { ({ folderPath, files } = JSON.parse(body)); }
+      catch { res.writeHead(400); res.end('Invalid JSON'); return; }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      try {
+        let deleted = 0;
+        const errors = [];
+        for (const filename of files) {
+          const filePath = path.join(folderPath, filename);
+          try {
+            fs.unlinkSync(filePath);
+            deleted++;
+          } catch (err) {
+            errors.push({ file: filename, error: err.message });
+          }
+        }
+        res.end(JSON.stringify({ deleted, total: files.length, errors }));
       } catch (err) {
         res.end(JSON.stringify({ error: err.message }));
       }
