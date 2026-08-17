@@ -696,8 +696,12 @@
                 </svg>
               </span>
               <input type="text" id="youtubeUrl"
-                placeholder="https://www.youtube.com/watch?v=..."
-                value="https://www.youtube.com/watch?v=FgXUxgJyvT0&t=8275s" />
+                placeholder="https://www.youtube.com/watch?v=..." />
+              <button class="btn-browse" id="clearUrlBtn" title="Clear URL" style="display:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -1038,6 +1042,18 @@
     if (cat === 'image') return '🖼️';
     return '📄';
   }
+
+  // ── URL clear button ─────────────────────────────────────────────────────
+  const urlInput    = document.getElementById('youtubeUrl');
+  const clearUrlBtn = document.getElementById('clearUrlBtn');
+  urlInput.addEventListener('input', () => {
+    clearUrlBtn.style.display = urlInput.value ? '' : 'none';
+  });
+  clearUrlBtn.addEventListener('click', () => {
+    urlInput.value = '';
+    clearUrlBtn.style.display = 'none';
+    urlInput.focus();
+  });
 
   // ── Console ───────────────────────────────────────────────────────────────
   clearBtn.addEventListener('click', () => {
