@@ -1331,18 +1331,6 @@
     countdownFill.style.width = (countdownValue / SCAN_INTERVAL * 100) + '%';
   }
 
-  // ── URL clear button ─────────────────────────────────────────────────────
-  const urlInput    = document.getElementById('youtubeUrl');
-  const clearUrlBtn = document.getElementById('clearUrlBtn');
-  urlInput.addEventListener('input', () => {
-    clearUrlBtn.style.display = urlInput.value ? '' : 'none';
-  });
-  clearUrlBtn.addEventListener('click', () => {
-    urlInput.value = '';
-    clearUrlBtn.style.display = 'none';
-    urlInput.focus();
-  });
-
   // ── Browse button ─────────────────────────────────────────────────────────
   document.getElementById('browseBtn').addEventListener('click', async () => {
     const browseBtn = document.getElementById('browseBtn');
