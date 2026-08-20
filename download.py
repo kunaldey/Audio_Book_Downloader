@@ -16,6 +16,22 @@ os.makedirs(download_path, exist_ok=True)
 
 SEP = '─' * 60
 
+# YouTube requires a JavaScript runtime to solve the player "n" challenge.
+# Without one, yt-dlp hands back throttled URLs that YouTube rejects with
+# HTTP 403 Forbidden. Only deno is enabled by default, but this app already
+# runs on Node, so use that unless overridden.
+JS_RUNTIME = os.environ.get('YTDLP_JS_RUNTIME', 'node').strip().lower()
+
+print(f'yt-dlp {yt_dlp.version.__version__} (JS runtime: {JS_RUNTIME or "none"})', flush=True)
+
+# Options shared by every yt-dlp invocation below
+common_opts = {
+    'quiet': True,
+    'no_warnings': False,
+}
+if JS_RUNTIME:
+    common_opts['js_runtimes'] = {JS_RUNTIME: {}}
+
 def progress_hook(d):
     if d['status'] == 'downloading':
         pct   = d.get('_percent_str', '?').strip()
@@ -31,11 +47,10 @@ print(SEP, flush=True)
 print('Downloading audio (best quality)...', flush=True)
 
 audio_opts = {
+    **common_opts,
     'format': 'bestaudio/best',
     'outtmpl': os.path.join(download_path, '%(title)s.%(ext)s'),
     'progress_hooks': [progress_hook],
-    'quiet': True,
-    'no_warnings': False,
 }
 
 try:
@@ -53,11 +68,10 @@ print(SEP, flush=True)
 print('Downloading thumbnail...', flush=True)
 
 thumb_opts = {
+    **common_opts,
     'skip_download': True,
     'writethumbnail': True,
     'outtmpl': os.path.join(download_path, '%(title)s.%(ext)s'),
-    'quiet': True,
-    'no_warnings': False,
 }
 
 try:
